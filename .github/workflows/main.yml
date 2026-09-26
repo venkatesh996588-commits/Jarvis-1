@@ -1,0 +1,50 @@
+name: Build Jarvis APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extract project
+        run: |
+          rm -rf jarvis-project
+          mkdir -p jarvis-project
+          unzip -q JarvisAssistant_GitHub_Build.zip -d jarvis-project
+
+      - name: Show project files
+        run: |
+          echo "Project files:"
+          find jarvis-project -maxdepth 3 -type f | sort
+
+      - name: Build APK
+        working-directory: jarvis-project
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Find APK
+        run: |
+          echo "APK files:"
+          find jarvis-project -type f -name "*.apk" -print
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jarvis-Debug-APK
+          path: jarvis-project/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error
